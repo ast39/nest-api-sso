@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma';
 import { RoleModule } from './module/role/role.module';
 import { UserModule } from './module/users/user.module';
 import { AuthModule } from './module/auth/auth.module';
+import { MyLoggerModule } from './common/logger/my-logger.module';
 
 @Module({
 	imports: [
@@ -13,6 +14,7 @@ import { AuthModule } from './module/auth/auth.module';
 			envFilePath: join('.env'),
 		}),
 		PrismaModule,
+		MyLoggerModule,
 		AuthModule,
 		RoleModule,
 		UserModule,
