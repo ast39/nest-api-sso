@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { IJwtToken } from '../../common/interfaces/jwt.interface';
@@ -19,6 +19,8 @@ export class AuthController {
 		private userService: UserService,
 	) {}
 
+	@Post('login')
+	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({
 		summary: 'Авторизация в API по логину и паролю',
 	})
@@ -28,7 +30,6 @@ export class AuthController {
 		isArray: false,
 		status: 201,
 	})
-	@Post('login')
 	async login(@Body() loginDto: LoginDto): Promise<IJwtToken> {
 		return await this.authService.signIn(loginDto);
 	}
@@ -50,12 +51,13 @@ export class AuthController {
 	}
 
 	@Post('refresh')
+	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({ summary: 'Обновление токенов' })
 	@ApiOkResponse({
 		description: 'Обновление токенов',
 		type: IJwtToken,
 		isArray: false,
-		status: 200,
+		status: 201,
 	})
 	refresh(@Body() refreshData: RefreshDto) {
 		return this.authService.refreshTokens(refreshData);
