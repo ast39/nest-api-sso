@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres:14.1-alpine
+    env_file:
+      - ./.env
+    container_name: ${POSTGRES_CONTAINER}
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - ord_network
+
+  api:
+    container_name: ${API_CONTAINER}
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    environment:
+      - TZ=Europe/Moscow
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+    networks:
+      - ord_network
+
+volumes:
+  pg_data: { }
+
+networks:
+  ord_network:

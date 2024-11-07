@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Пользователи
+model User {
+  id           Int      @id @default(autoincrement()) @map("id") @db.Integer
+  login        String   @map("login") @db.VarChar(255) // Логин
+  password     String   @map("password") @db.VarChar(255) // Пароль
+  name         String   @map("name") @db.VarChar(255) // ФИО
+  position     String   @map("position") @db.VarChar(255) // Должность
+  isRoot       Boolean  @default(false) @map("is_root") @db.Boolean // Метка администратора
+  isBlocked    Boolean  @default(false) @map("is_blocked") @db.Boolean // Метка блокирования
+  refreshToken String?  @unique @map("refresh_token") @db.VarChar(255) // Сам refresh-токен
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  isDeleted    Boolean  @default(false) @map("is_deleted") @db.Boolean // Метка удаления
+
+  roles UserRole[] @relation("ur_user") // Роли пользователя
+
+  @@map("users")
+}
+
+// Роли
+model Role {
+  id          Int      @id @default(autoincrement()) @map("id") @db.Integer
+  name        String   @unique @map("name") @db.VarChar(255) // Наименование роли
+  description String?  @map("description") @db.VarChar(255) // Описание роли
+  isBlocked   Boolean  @default(false) @map("is_blocked") @db.Boolean // Метка блокирования
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  isDeleted   Boolean  @default(false) @map("is_deleted") @db.Boolean // Метка удаления
+
+  users UserRole[] @relation("ur_role") // Пользователи с данной ролью
+
+  @@map("roles")
+}
+
+// Сводная таблица ролей пользователей
+model UserRole {
+  userId Int @map("user_id") @db.Integer // ID пользователя
+  roleId Int @map("role_id") @db.Integer // ID роли
+
+  user User @relation("ur_user", fields: [userId], references: [id], onDelete: Restrict)
+  role Role @relation("ur_role", fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+// Черный список токенов
+model BlockedToken {
+  id        Int      @id @default(autoincrement()) @map("id") @db.Integer
+  token     String   @unique @map("token") @db.Text // Сам токен
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("blocked_tokens")
+}
