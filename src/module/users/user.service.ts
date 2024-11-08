@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma';
 import { DefaultResponse } from '../../common/dto/default.response.dto';
 import { UserRepository } from './user.repository';
 import { UserValidation } from './validation/user.validation';
-import { UserNotFoundException } from './exceptions/user.exceptions';
+import { RootUserException, UserNotFoundException } from "./exceptions/user.exceptions";
 import { UserCreateDto } from './dto/user.create.dto';
 import { UserUpdateDto } from './dto/user.update.dto';
 import { UserDto } from './dto/user.dto';
@@ -169,7 +169,11 @@ export class UserService {
 	async blockUser(userId: number): Promise<DefaultResponse> {
 		return this.prisma.$transaction(async (tx) => {
 			// Получим пользователя
-			await this.getUserById(userId);
+			const user = await this.getUserById(userId);
+
+			if (user.isRoot) {
+				throw new RootUserException();
+			}
 
 			// Заблокируем пользователя
 			await this.userRepo.block({ id: +userId }, tx);
@@ -182,7 +186,11 @@ export class UserService {
 	async unblockUser(userId: number): Promise<DefaultResponse> {
 		return this.prisma.$transaction(async (tx) => {
 			// Получим пользователя
-			await this.getUserById(userId);
+			const user = await this.getUserById(userId);
+
+			if (user.isRoot) {
+				throw new RootUserException();
+			}
 
 			// Разблокируем пользователя
 			await this.userRepo.unBlock({ id: +userId }, tx);
@@ -195,7 +203,11 @@ export class UserService {
 	async deleteUser(userId: number): Promise<DefaultResponse> {
 		return this.prisma.$transaction(async (tx) => {
 			// Получим пользователя
-			await this.getUserById(userId);
+			const user = await this.getUserById(userId);
+
+			if (user.isRoot) {
+				throw new RootUserException();
+			}
 
 			// Удалим пользователя
 			await this.userRepo.destroy({ id: +userId }, tx);

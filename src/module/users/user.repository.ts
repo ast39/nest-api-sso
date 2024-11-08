@@ -91,7 +91,11 @@ export class UserRepository {
 				},
 			},
 			include: {
-				roles: true,
+				roles: {
+					include: {
+						role: true,
+					},
+				},
 			},
 		});
 	}

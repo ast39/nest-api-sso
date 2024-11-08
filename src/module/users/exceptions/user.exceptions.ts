@@ -17,3 +17,9 @@ export class UserDoubleException extends HttpException {
 		super({ message: 'Пользователь должен быть уникален' }, HttpStatus.BAD_REQUEST);
 	}
 }
+
+export class RootUserException extends HttpException {
+	constructor() {
+		super({ message: 'Нельзя изменить Root пользователя' }, HttpStatus.BAD_REQUEST);
+	}
+}
