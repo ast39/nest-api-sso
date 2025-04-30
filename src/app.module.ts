@@ -5,7 +5,8 @@ import { PrismaModule } from './prisma';
 import { RoleModule } from './module/role/role.module';
 import { UserModule } from './module/users/user.module';
 import { AuthModule } from './module/auth/auth.module';
-import { MyLoggerModule } from './common/logger/my-logger.module';
+import { RedisModule } from './module/redis/redis.module';
+import { SessionModule } from './module/session/session.module';
 
 @Module({
 	imports: [
@@ -14,10 +15,11 @@ import { MyLoggerModule } from './common/logger/my-logger.module';
 			envFilePath: join('.env'),
 		}),
 		PrismaModule,
-		MyLoggerModule,
 		AuthModule,
 		RoleModule,
 		UserModule,
+		RedisModule,
+		SessionModule,
 	],
 	controllers: [],
 	providers: [],

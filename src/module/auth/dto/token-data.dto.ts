@@ -40,7 +40,18 @@ export class TokenDataDto {
 
 	@IsNotEmpty()
 	@IsString()
-	@Expose({ name: 'name' })
+	@Expose({ name: 'department' })
+	@ApiProperty({
+		title: 'Отдел',
+		description: 'Отдел пользователя',
+		type: String,
+		required: true,
+	})
+	department: string;
+
+	@IsNotEmpty()
+	@IsString()
+	@Expose({ name: 'position' })
 	@ApiProperty({
 		title: 'Должность',
 		description: 'Должность пользователя',
@@ -49,10 +60,39 @@ export class TokenDataDto {
 	})
 	position: string;
 
+	@IsNotEmpty()	
+	@IsString()
+	@Expose({ name: 'email' })
+	@ApiProperty({
+		title: 'Email',
+		description: 'Email пользователя',
+		type: String,
+		required: true,
+	})
+	email: string;
+
+	@IsNotEmpty()
+	@IsString()
+	@Expose({ name: 'phone' })
+	@ApiProperty({
+		title: 'Телефон',
+		description: 'Телефон пользователя',
+		type: String,
+		required: true,
+	})
+	phone: string;
+
+	@ApiProperty({
+		title: 'Telegram ID',
+		description: 'Telegram ID пользователя',
+		type: String,
+		required: true,
+	})
+	telegramId: string;
+
 	@IsOptional()
 	@IsArray()
 	@ArrayNotEmpty()
-	@ValidateNested({ each: true })
 	@Type(() => RoleDto)
 	@Expose({ name: 'roles' })
 	@ApiProperty({

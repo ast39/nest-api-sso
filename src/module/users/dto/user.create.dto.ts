@@ -39,7 +39,18 @@ export class UserCreateDto {
 	})
 	name: string;
 
-	@IsNotEmpty()
+	@IsOptional()
+	@IsString()
+	@Expose({ name: 'department' })
+	@ApiProperty({
+		title: 'Отдел',
+		description: 'Отдел пользователя',
+		type: String,
+		required: false,
+	})
+	department?: string;
+	
+	@IsOptional()
 	@IsString()
 	@Expose({ name: 'position' })
 	@ApiProperty({
@@ -49,7 +60,40 @@ export class UserCreateDto {
 		required: true,
 		maxLength: 255,
 	})
-	position: string;
+	position?: string;
+
+	@IsOptional()
+	@IsString()
+	@Expose({ name: 'email' })
+	@ApiProperty({
+		title: 'Email',
+		description: 'Email пользователя',
+		type: String,
+		required: false,
+	})
+	email?: string;
+
+	@IsOptional()
+	@IsString()
+	@Expose({ name: 'phone' })
+	@ApiProperty({
+		title: 'Телефон',
+		description: 'Телефон пользователя',
+		type: String,
+		required: false,
+	})
+	phone?: string;
+
+	@IsOptional()
+	@IsString()
+	@Expose({ name: 'telegramId' })
+	@ApiProperty({
+		title: 'Телеграм',
+		description: 'Телеграм пользователя',
+		type: String,
+		required: false,
+	})
+	telegramId?: string;
 
 	@IsNotEmpty()
 	@IsArray()

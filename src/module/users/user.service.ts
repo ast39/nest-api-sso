@@ -108,6 +108,16 @@ export class UserService {
 		});
 	}
 
+	// Найти пользователя по логину
+	async getUserByLogin(userLogin: string): Promise<User | null> {
+		return this.prisma.$transaction(async (tx) => {
+			// Получим пользователя
+			const users = await this.userRepo.index({ where: { login: userLogin } }, tx);
+
+			return users[0] ?? null;
+		});
+	}
+
 	// Найти пользователя по ID c refresh токеном
 	async getUserByIdVsRefresh(userId: number): Promise<UserVsRefreshDto> {
 		return this.prisma.$transaction(async (tx) => {
@@ -118,16 +128,6 @@ export class UserService {
 			}
 
 			return new UserVsRefreshDto(user as IUser);
-		});
-	}
-
-	// Найти пользователя по логину
-	async getUserByLogin(userLogin: string): Promise<User | null> {
-		return this.prisma.$transaction(async (tx) => {
-			// Получим пользователя
-			const users = await this.userRepo.index({ where: { login: userLogin } }, tx);
-
-			return users[0] ?? null;
 		});
 	}
 

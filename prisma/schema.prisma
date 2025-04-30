@@ -13,7 +13,11 @@ model User {
   login        String   @map("login") @db.VarChar(255) // Логин
   password     String   @map("password") @db.VarChar(255) // Пароль
   name         String   @map("name") @db.VarChar(255) // ФИО
-  position     String   @map("position") @db.VarChar(255) // Должность
+  department   String?  @map("department") @db.VarChar(255) // Отдел
+  position     String?  @map("position") @db.VarChar(255) // Должность
+  email        String?  @map("email") @db.VarChar(255) // Email
+  phone        String?  @map("phone") @db.VarChar(255) // Телефон
+  telegramId   String?  @map("telegram_id") @db.VarChar(255) // Telegram ID
   isRoot       Boolean  @default(false) @map("is_root") @db.Boolean // Метка администратора
   isBlocked    Boolean  @default(false) @map("is_blocked") @db.Boolean // Метка блокирования
   refreshToken String?  @unique @map("refresh_token") @db.VarChar(255) // Сам refresh-токен

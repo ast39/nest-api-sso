@@ -45,6 +45,15 @@ export class UserDto {
 	name: string;
 
 	@IsString()
+	@Expose({ name: 'department	' })
+	@ApiProperty({
+		title: 'Отдел',
+		description: 'Отдел пользователя',
+		type: String,
+	})
+	department: string;
+
+	@IsString()
 	@Expose({ name: 'position' })
 	@ApiProperty({
 		title: 'Должность',
@@ -52,6 +61,33 @@ export class UserDto {
 		type: String,
 	})
 	position: string;
+
+	@IsString()
+	@Expose({ name: 'email' })
+	@ApiProperty({
+		title: 'Email',
+		description: 'Email пользователя',
+		type: String,
+	})
+	email: string;
+
+	@IsString()
+	@Expose({ name: 'phone' })
+	@ApiProperty({
+		title: 'Телефон',
+		description: 'Телефон пользователя',
+		type: String,
+	})
+	phone: string;
+
+	@IsString()
+	@Expose({ name: 'telegramId' })
+	@ApiProperty({
+		title: 'Телеграм',
+		description: 'Телеграм пользователя',
+		type: String,
+	})
+	telegramId: string;
 
 	@IsBoolean()
 	@Expose({ name: 'isRoot' })

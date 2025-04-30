@@ -1,42 +1,30 @@
-version: '3.9'
+version: '3.8'
 
 services:
-
-  postgres:
-    image: postgres:14.1-alpine
-    env_file:
-      - ./.env
-    container_name: ${POSTGRES_CONTAINER}
-    environment:
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+  redis:
+    image: redis:7.2-alpine
+    container_name: sso-redis
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - pg_data:/var/lib/postgresql/data
-    restart: always
-    networks:
-      - ord_network
-
-  api:
-    container_name: ${API_CONTAINER}
-    build:
-      dockerfile: Dockerfile
-    ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     environment:
-      - TZ=Europe/Moscow
-    env_file:
-      - ./.env
-    depends_on:
-      - postgres
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     networks:
-      - ord_network
+      - sso-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
-  pg_data: { }
+  redis_data:
+    name: sso-redis-data
 
 networks:
-  ord_network:
+  sso-network:
+    name: sso-network
+    driver: bridge 

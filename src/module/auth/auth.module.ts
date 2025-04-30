@@ -8,11 +8,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from '../users/user.module';
 import { AuthRepository } from './auth.repository';
 import { AttemptService } from './attempt.service';
+import { SessionModule } from '../session/session.module';
 
 @Global()
 @Module({
 	imports: [
 		UserModule,
+		SessionModule,
 		ConfigModule.forRoot({
 			isGlobal: true,
 		}),

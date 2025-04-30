@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, ValidateNested } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsBoolean, IsString, ValidateNested } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 import { IJwtToken } from '../../../common/interfaces/jwt.interface';
 import { RoleDto } from '../../role/dto/role.dto';
@@ -18,6 +18,7 @@ export class AuthDataDto extends IJwtToken {
 	})
 	roles?: RoleDto[];
 
+	@IsBoolean()
 	@Expose({ name: 'isRoot' })
 	@ApiProperty({
 		title: 'Метка администратора',
@@ -25,4 +26,13 @@ export class AuthDataDto extends IJwtToken {
 		type: Boolean,
 	})
 	isRoot: boolean;
+
+	@IsString()
+	@Expose({ name: 'sessionId' })
+	@ApiProperty({
+		title: 'ID сессии',
+		description: 'ID сессии пользователя',
+		type: String,
+	})
+	sessionId: string;
 }

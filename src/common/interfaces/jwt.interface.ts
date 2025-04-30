@@ -10,13 +10,4 @@ export class IJwtToken {
 		type: String,
 	})
 	accessToken: string;
-
-	@Expose({ name: 'refreshToken' })
-	@ApiProperty({
-		title: 'JWT Токен обновления',
-		description: 'JWT токен для обновления авторизации',
-		default: '',
-		type: String,
-	})
-	refreshToken: string;
 }

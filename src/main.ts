@@ -13,7 +13,12 @@ async function bootstrap() {
 	const SWAGGER_PREFIX = process.env.API_PREFIX + process.env.SWAGGER_PATH;
 
 	app.setGlobalPrefix(process.env.API_PREFIX);
-	app.useGlobalPipes(new ValidationPipe());
+	app.useGlobalPipes(
+		new ValidationPipe({
+			transform: true,
+			transformOptions: { enableImplicitConversion: false },
+		}),
+	);
 	app.useGlobalFilters(new HttpExceptionFilter());
 
 	app.enableCors({

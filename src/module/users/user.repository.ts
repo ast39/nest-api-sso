@@ -79,7 +79,11 @@ export class UserRepository {
 				login: data.login,
 				password: data.password,
 				name: data.name,
-				position: data.position,
+				department: data.department ?? null,
+				position: data.position ?? null,
+				email: data.email ?? null,
+				phone: data.phone ?? null,
+				telegramId: data.telegramId ?? null,
 				isRoot: false,
 				isBlocked: false,
 				roles: {
