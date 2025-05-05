@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
-import { Expose } from 'class-transformer';
+import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
+import { DeviceDto } from './device.dto';
 
-export class LoginDto {
+export class LoginByPasswordDto {
 	@IsNotEmpty()
 	@IsString()
 	@Expose({ name: 'login' })
@@ -24,4 +25,16 @@ export class LoginDto {
 		required: true,
 	})
 	password: string;
+
+	@IsNotEmpty()
+	@ValidateNested()
+	@Type(() => DeviceDto)
+	@Expose({ name: 'device' })
+	@ApiProperty({
+		title: 'Устройство',
+		description: 'Устройство пользователя',
+		type: DeviceDto,
+		required: true,
+	})
+	device: DeviceDto;
 }

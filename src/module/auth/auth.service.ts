@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { LoginDto } from './dto/login.dto';
 import { UserService } from '../users/user.service';
 import {
 	BruteForceException,
@@ -18,8 +17,9 @@ import { IUser } from '../users/interfaces/user.prisma.interface';
 import { DefaultResponse } from '../../common/dto/default.response.dto';
 import { AttemptService } from './attempt.service';
 import { SessionService } from '../session/session.service';
-import { Logger } from '@nestjs/common';
+import { DeviceInfoDto } from '../session/dto/device-info.dto';
 import { ValidateResponseDto } from './dto/validate-response.dto';
+import { LoginByPasswordDto } from './dto/login-by-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +35,9 @@ export class AuthService {
 	) {}
 
 	// Авторизация по логину и паролю
-	async signIn(login: LoginDto): Promise<AuthDataDto> {
+	async signInByPassword(login: LoginByPasswordDto): Promise<AuthDataDto> {
+		this.logger.debug(`Notice: SignIn by password`);
+
 		// Проверяем, не заблокирован ли пользователь по попыткам входа
 		if (this.attemptService.isBlocked(login.login)) {
 			throw new BruteForceException();
@@ -68,14 +70,15 @@ export class AuthService {
 		const sessionId = await this.sessionService.createSession(
 			user.id.toString(),
 			userDto.roles.map(role => role.name),
+			login.device
 		);
-		this.logger.debug(`Created session ${sessionId} for user ${user.id}`);
+		this.logger.debug(`Notice: Session created [${sessionId}] for user [${user.id}]`);
 
-		// Создадим на него токены
-		const tokens = await this.generateTokens(user, sessionId);
+		// Создадим на него токен
+		const token = await this.generateToken(user, sessionId);
 
 		return {
-			accessToken: tokens.access_token,
+			accessToken: token,
 			roles: userDto.roles,
 			isRoot: user.isRoot,
 			sessionId,
@@ -83,34 +86,28 @@ export class AuthService {
 	}
 
 	// Silent login - получение токенов по сессии
-	async silentLogin(sessionId?: string): Promise<AuthDataDto> {
-		this.logger.debug(`Attempting silent login with sessionId: ${sessionId}`);
+	async signInBySession(sessionId: string): Promise<AuthDataDto> {
+		this.logger.debug(`Notice: SignIn by session`);
 
-		// Если sessionId не передан, пытаемся получить из cookie
-		if (!sessionId) {
-			this.logger.debug('No sessionId provided');
-			throw new TokenExpireException();
-		}
-
-		// Проверяем сессию
+		// Если сессии нет
 		const session = await this.sessionService.getSession(sessionId);
 		if (!session) {
-			this.logger.debug(`Session ${sessionId} not found or expired`);
+			this.logger.debug(`Exception: Session not found [${sessionId}]`);
 			throw new TokenExpireException();
 		}
 
-		// Получаем пользователя
+		// Если пользователя нет
 		const user = await this.userService.getUserById(+session.userId);
 		if (!user) {
-			this.logger.debug(`User ${session.userId} not found`);
+			this.logger.debug(`Exception: User not found [${session.userId}]`);
 			throw new TokenExpireException();
 		}
 
-		// Генерируем новые токены
-		const tokens = await this.generateTokens(user, sessionId);
+		// Генерируем новый токен
+		const token = await this.generateToken(user, sessionId);
 
 		return {
-			accessToken: tokens.access_token,
+			accessToken: token,
 			roles: user.roles,
 			isRoot: user.isRoot,
 			sessionId,
@@ -119,6 +116,8 @@ export class AuthService {
 
 	// Логаут
 	public async logout(userId: number, token: string): Promise<DefaultResponse> {
+		this.logger.debug(`Notice: Logout`);
+
 		// Заблокируем текущий токен
 		const alreadyBlocked = await this.authRepo.check(token);
 		if (!alreadyBlocked) {
@@ -129,13 +128,14 @@ export class AuthService {
 		const payload = this.jwtService.decode(token);
 		if (payload && payload['sessionId']) {
 			await this.sessionService.deleteSession(payload['sessionId']);
+			this.logger.debug(`Notice: Session deleted [${payload['sessionId']}] for user [${userId}]`);
 		}
 
 		return { success: true };
 	}
 
 	// Сгенерировать токены
-	private async generateTokens(user: TokenDataDto, sessionId: string) {
+	private async generateToken(user: TokenDataDto, sessionId: string): Promise<string> {
 		const payload = {
 			id: user.id,
 			login: user.login,
@@ -149,30 +149,26 @@ export class AuthService {
 			isRoot: user.isRoot,
 			sessionId,
 		};
-		const access_token = await this.jwtService.signAsync(payload, {
+		return this.jwtService.signAsync(payload, {
 			secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
 			expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRED'),
 		});
-	
-		return {
-			access_token,
-		};
 	}
 
 	// Обновление сессии
 	async refreshUserSession(sessionId: string): Promise<DefaultResponse> {
-		this.logger.debug(`Refreshing session ${sessionId}`);
+		this.logger.debug(`Notice: Refresh session`);
 
 		// Проверяем сессию
 		const session = await this.sessionService.getSession(sessionId);
 		if (!session) {
-			this.logger.debug(`Session ${sessionId} not found or expired`);
+			this.logger.debug(`Exception: Session not found [${sessionId}]`);
 			throw new TokenExpireException();
 		}
 
 		// Обновляем сессию
 		await this.sessionService.refreshSession(sessionId);
-		this.logger.debug(`Session ${sessionId} refreshed successfully`);
+		this.logger.debug(`Notice: Session refreshed [${sessionId}]`);
 
 		return { success: true };
 	}
@@ -183,7 +179,7 @@ export class AuthService {
 			// Проверяем, не заблокирован ли токен
 			const isBlocked = await this.authRepo.check(token);
 			if (isBlocked) {
-				this.logger.debug('Token is blocked');
+				this.logger.debug(`Exception: Token is blocked`);
 				throw new TokenExpireException();
 			}
 			
@@ -192,8 +188,15 @@ export class AuthService {
 				secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
 			});
 
-			// Если токен валиден, получаем полную информацию о пользователе
-			if (payload) {
+			// Если токен валиден, проверяем существование сессии
+			if (payload && payload['sessionId']) {
+				const session = await this.sessionService.getSession(payload['sessionId']);
+				if (!session) {
+					this.logger.debug(`Exception: Session not found during token validation ${payload['sessionId']}`);
+					throw new TokenExpireException();
+				}
+
+				// Получаем полную информацию о пользователе
 				const user = await this.userService.getUserById(payload.id);
 				if (!user) {
 					throw new TokenExpireException();
@@ -205,7 +208,7 @@ export class AuthService {
 				} as ValidateResponseDto;
 			}
 		} catch (error) {
-			this.logger.debug(`Token validation failed: ${error.message}`);
+			this.logger.debug(`Exception: Token validation failed [${error.message}]`);
 			throw new TokenExpireException();
 		}
 	}

@@ -2,18 +2,18 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards, Headers }
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { IJwtToken } from '../../common/interfaces/jwt.interface';
-import { LoginDto } from './dto/login.dto';
 import { UserDto } from '../users/dto/user.dto';
 import { JwtUser } from '../../common/decorators/user.decorator';
 import { UserService } from '../users/user.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtToken } from '../../common/decorators/jwt.decorator';
 import { DefaultResponse } from '../../common/dto/default.response.dto';
-import { SilentLoginDto } from './dto/silent-login.dto';
 import { SessionService } from '../session/session.service';
 import { ValidateResponseDto } from './dto/validate-response.dto';
-import { TokenExpireException } from './exceptions/auth.exeptions';
 import { Bearer } from "src/common/decorators/bearer.decorator";
+import { LoginByPasswordDto } from "./dto/login-by-password.dto";
+import { LoginBySessionDto } from "./dto/login-by-session.dto";
+import { AuthDataDto } from "./dto/auth-data.dto";
 
 @ApiTags('Авторизация')
 @Controller('auth')
@@ -33,12 +33,14 @@ export class AuthController {
 	})
 	@ApiOkResponse({
 		description: 'Авторизация в API по логину и паролю',
-		type: IJwtToken,
+		type: AuthDataDto,
 		isArray: false,
 		status: 200,
 	})
-	async login(@Body() loginDto: LoginDto): Promise<IJwtToken> {
-		return await this.authService.signIn(loginDto);
+	async login(
+		@Body() loginData: LoginByPasswordDto
+	): Promise<AuthDataDto> {
+		return await this.authService.signInByPassword(loginData);
 	}
 
 	@Get('me')
@@ -88,8 +90,8 @@ export class AuthController {
 		isArray: false,
 		status: 200,
 	})
-	async silentLogin(@Body() silentLoginDto: SilentLoginDto): Promise<IJwtToken> {
-		return await this.authService.silentLogin(silentLoginDto.sessionId);
+	async silentLogin(@Body() loginData: LoginBySessionDto): Promise<IJwtToken> {
+		return await this.authService.signInBySession(loginData.sessionId);
 	}
 
 	@Post('session/refresh')
@@ -103,7 +105,7 @@ export class AuthController {
 		isArray: false,
 		status: 200,
 	})
-	async refreshSession(@Body() silentLoginDto: SilentLoginDto): Promise<DefaultResponse> {
+	async refreshSession(@Body() silentLoginDto: LoginBySessionDto): Promise<DefaultResponse> {
 		return await this.authService.refreshUserSession(silentLoginDto.sessionId);
 	}
 
@@ -118,8 +120,8 @@ export class AuthController {
 		isArray: false,
 		status: 200,
 	})
-	async deleteSession(@Body() silentLoginDto: SilentLoginDto): Promise<DefaultResponse> {
-		await this.sessionService.deleteSession(silentLoginDto.sessionId);
+	async deleteSession(@Body() loginData: LoginBySessionDto): Promise<DefaultResponse> {
+		await this.sessionService.deleteSession(loginData.sessionId);
 		return { success: true };
 	}
 
