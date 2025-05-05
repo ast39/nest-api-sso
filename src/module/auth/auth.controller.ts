@@ -77,6 +77,23 @@ export class AuthController {
 		return this.authService.logout(Number(userId), token);
 	}
 
+	@Post('logout/all')
+	@HttpCode(HttpStatus.OK)
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: 'Глобальный логаут - удаление всех сессий на всех устройствах',
+	})
+	@ApiOkResponse({
+		description: 'Все сессии пользователя удалены',
+		type: DefaultResponse,
+		isArray: false,
+		status: 200,
+	})
+	async globalLogout(@JwtUser('id') userId: string): Promise<DefaultResponse> {
+		return this.authService.globalLogout(Number(userId));
+	}
+
 	// Авторизация по сессии
 
 	@Post('session/login')

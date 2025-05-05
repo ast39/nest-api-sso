@@ -134,6 +134,21 @@ export class AuthService {
 		return { success: true };
 	}
 
+	// Глобальный логаут - удаление всех сессий пользователя
+	async globalLogout(userId: number): Promise<DefaultResponse> {
+		this.logger.debug(`Notice: Global logout`);
+		
+		// Получаем все сессии пользователя
+		const sessions = await this.sessionService.getUserSessions(userId.toString());
+		
+		// Удаляем все сессии
+		await this.sessionService.deleteAllUserSessions(userId.toString());
+		
+		this.logger.debug(`Deleted ${sessions.length} sessions for user ${userId}`);
+		
+		return { success: true };
+	}
+
 	// Сгенерировать токены
 	private async generateToken(user: TokenDataDto, sessionId: string): Promise<string> {
 		const payload = {
