@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Attempt } from './interfaces/attempt.interface';
 import { ConfigService } from "@nestjs/config";
+import { Attempt } from '../interfaces/attempt.interface';
 
 @Injectable()
 export class AttemptService {

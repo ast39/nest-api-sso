@@ -1,38 +1,38 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from '../users/user.service';
+import { UserService } from '../../users/user.service';
 import {
 	BruteForceException,
 	TokenExpireException,
 	UserWasBlockedException,
 	WrongAuthDataException,
-} from './exceptions/auth.exeptions';
+} from '../exceptions/auth.exeptions';
 import * as bcrypt from 'bcryptjs';
-import { TokenDataDto } from './dto/token-data.dto';
-import { AuthDataDto } from './dto/auth-data.dto';
-import { AuthRepository } from './auth.repository';
-import { UserDto } from '../users/dto/user.dto';
-import { IUser } from '../users/interfaces/user.prisma.interface';
-import { DefaultResponse } from '../../common/dto/default.response.dto';
-import { AttemptService } from './attempt.service';
-import { SessionService } from '../session/session.service';
-import { DeviceInfoDto } from '../session/dto/device-info.dto';
-import { ValidateResponseDto } from './dto/validate-response.dto';
-import { LoginByPasswordDto } from './dto/login-by-password.dto';
+import { TokenDataDto } from '../dto/token-data.dto';
+import { AuthDataDto } from '../dto/auth-data.dto';
+import { AuthRepository } from '../repositories/auth.repository';
+import { UserDto } from '../../users/dto/user.dto';
+import { IUser } from '../../users/interfaces/user.prisma.interface';
+import { DefaultResponse } from '../../../common/dto/default.response.dto';
+import { AttemptService } from '../../auth/services/attempt.service';
+import { SessionService } from '../../session/session.service';
+import { ValidateResponseDto } from '../dto/validate-response.dto';
+import { LoginByPasswordDto } from '../dto/login-by-password.dto';
+import { TokenService } from './token.service';
 
 @Injectable()
-export class AuthService {
-	private readonly logger = new Logger(AuthService.name);
-
+export class AuthService extends TokenService {
 	constructor(
-		private authRepo: AuthRepository,
 		private attemptService: AttemptService,
-		private jwtService: JwtService,
-		private configService: ConfigService,
-		private userService: UserService,
-		private sessionService: SessionService,
-	) {}
+		jwtService: JwtService,
+		configService: ConfigService,
+		userService: UserService,
+		sessionService: SessionService,
+		authRepo: AuthRepository,
+	) {
+		super(jwtService, configService, userService, sessionService, authRepo);
+	}
 
 	// Авторизация по логину и паролю
 	async signInByPassword(login: LoginByPasswordDto): Promise<AuthDataDto> {
@@ -85,35 +85,6 @@ export class AuthService {
 		} as AuthDataDto;
 	}
 
-	// Silent login - получение токенов по сессии
-	async signInBySession(sessionId: string): Promise<AuthDataDto> {
-		this.logger.debug(`Notice: SignIn by session`);
-
-		// Если сессии нет
-		const session = await this.sessionService.getSession(sessionId);
-		if (!session) {
-			this.logger.debug(`Exception: Session not found [${sessionId}]`);
-			throw new TokenExpireException();
-		}
-
-		// Если пользователя нет
-		const user = await this.userService.getUserById(+session.userId);
-		if (!user) {
-			this.logger.debug(`Exception: User not found [${session.userId}]`);
-			throw new TokenExpireException();
-		}
-
-		// Генерируем новый токен
-		const token = await this.generateToken(user, sessionId);
-
-		return {
-			accessToken: token,
-			roles: user.roles,
-			isRoot: user.isRoot,
-			sessionId,
-		} as AuthDataDto;
-	}
-
 	// Логаут
 	public async logout(userId: number, token: string): Promise<DefaultResponse> {
 		this.logger.debug(`Notice: Logout`);
@@ -150,7 +121,7 @@ export class AuthService {
 	}
 
 	// Сгенерировать токены
-	private async generateToken(user: TokenDataDto, sessionId: string): Promise<string> {
+	protected async generateToken(user: TokenDataDto, sessionId: string): Promise<string> {
 		const payload = {
 			id: user.id,
 			login: user.login,
@@ -168,24 +139,6 @@ export class AuthService {
 			secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
 			expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRED'),
 		});
-	}
-
-	// Обновление сессии
-	async refreshUserSession(sessionId: string): Promise<DefaultResponse> {
-		this.logger.debug(`Notice: Refresh session`);
-
-		// Проверяем сессию
-		const session = await this.sessionService.getSession(sessionId);
-		if (!session) {
-			this.logger.debug(`Exception: Session not found [${sessionId}]`);
-			throw new TokenExpireException();
-		}
-
-		// Обновляем сессию
-		await this.sessionService.refreshSession(sessionId);
-		this.logger.debug(`Notice: Session refreshed [${sessionId}]`);
-
-		return { success: true };
 	}
 
 	// Валидация токена

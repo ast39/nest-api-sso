@@ -49,7 +49,7 @@ export class UserController {
 		@CurrentUrl('user') url: string,
 		@Query() query: UserFilterDto,
 	): Promise<PaginationInterface<UserDto>> {
-		return await this.userService.userList(url, query);
+		return this.userService.userList(url, query);
 	}
 
 	@Get(':requested_id')
@@ -65,7 +65,7 @@ export class UserController {
 	})
 	@Roles('admin')
 	public async show(@JwtUser('id') userId: string, @Param('requested_id') requestedId: string): Promise<UserDto> {
-		return await this.userService.getUserById(Number(requestedId));
+		return this.userService.getUserById(Number(requestedId));
 	}
 
 	@Post()

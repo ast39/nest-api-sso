@@ -1,30 +1,24 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards, Headers } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { IJwtToken } from '../../common/interfaces/jwt.interface';
-import { UserDto } from '../users/dto/user.dto';
-import { JwtUser } from '../../common/decorators/user.decorator';
-import { UserService } from '../users/user.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { JwtToken } from '../../common/decorators/jwt.decorator';
-import { DefaultResponse } from '../../common/dto/default.response.dto';
-import { SessionService } from '../session/session.service';
-import { ValidateResponseDto } from './dto/validate-response.dto';
-import { Bearer } from "src/common/decorators/bearer.decorator";
-import { LoginByPasswordDto } from "./dto/login-by-password.dto";
-import { LoginBySessionDto } from "./dto/login-by-session.dto";
-import { AuthDataDto } from "./dto/auth-data.dto";
+import { AuthService } from '../services/auth.service';
+import { UserDto } from '../../users/dto/user.dto';
+import { JwtUser } from '../../../common/decorators/user.decorator';
+import { UserService } from '../../users/user.service';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { JwtToken } from '../../../common/decorators/jwt.decorator';
+import { DefaultResponse } from '../../../common/dto/default.response.dto';
+import { ValidateResponseDto } from '../dto/validate-response.dto';
+import { Bearer } from "../../../common/decorators/bearer.decorator";
+import { LoginByPasswordDto } from "../dto/login-by-password.dto";
+import { AuthDataDto } from "../dto/auth-data.dto";
 
-@ApiTags('Авторизация')
+@ApiTags('Авторизация по логину и паролю')
 @Controller('auth')
 export class AuthController {
 	constructor(
 		private authService: AuthService,
 		private userService: UserService,
-		private sessionService: SessionService,
 	) {}
-
-	// Авторизация по токенам
 
 	@Post('login')
 	@HttpCode(HttpStatus.OK)
@@ -92,54 +86,6 @@ export class AuthController {
 	})
 	async globalLogout(@JwtUser('id') userId: string): Promise<DefaultResponse> {
 		return this.authService.globalLogout(Number(userId));
-	}
-
-	// Авторизация по сессии
-
-	@Post('session/login')
-	@HttpCode(HttpStatus.OK)
-	@ApiOperation({
-		summary: 'Silent auth - получение токенов по сессии',
-	})
-	@ApiOkResponse({
-		description: 'Получение токенов по сессии',
-		type: IJwtToken,
-		isArray: false,
-		status: 200,
-	})
-	async silentLogin(@Body() loginData: LoginBySessionDto): Promise<IJwtToken> {
-		return await this.authService.signInBySession(loginData.sessionId);
-	}
-
-	@Post('session/refresh')
-	@HttpCode(HttpStatus.OK)
-	@ApiOperation({
-		summary: 'Обновление сессии',
-	})
-	@ApiOkResponse({
-		description: 'Сессия обновлена',
-		type: DefaultResponse,
-		isArray: false,
-		status: 200,
-	})
-	async refreshSession(@Body() silentLoginDto: LoginBySessionDto): Promise<DefaultResponse> {
-		return await this.authService.refreshUserSession(silentLoginDto.sessionId);
-	}
-
-	@Post('session/delete')
-	@HttpCode(HttpStatus.OK)
-	@ApiOperation({
-		summary: 'Удаление сессии',
-	})
-	@ApiOkResponse({
-		description: 'Сессия удалена',
-		type: DefaultResponse,
-		isArray: false,
-		status: 200,
-	})
-	async deleteSession(@Body() loginData: LoginBySessionDto): Promise<DefaultResponse> {
-		await this.sessionService.deleteSession(loginData.sessionId);
-		return { success: true };
 	}
 
 	@Post('validate')

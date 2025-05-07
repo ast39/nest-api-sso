@@ -88,12 +88,23 @@ export class UserCreateDto {
 	@IsString()
 	@Expose({ name: 'telegramId' })
 	@ApiProperty({
-		title: 'Телеграм',
-		description: 'Телеграм пользователя',
+		title: 'Телеграм ID',
+		description: 'Телеграм ID пользователя',
 		type: String,
 		required: false,
 	})
 	telegramId?: string;
+
+	@IsOptional()
+	@IsString()
+	@Expose({ name: 'telegramName' })
+	@ApiProperty({
+		title: 'Телеграм имя',
+		description: 'Телеграм имя пользователя',
+		type: String,
+		required: false,
+	})
+	telegramName?: string;
 
 	@IsNotEmpty()
 	@IsArray()

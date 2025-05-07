@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IPrismaTR, PrismaService } from '../../prisma';
 import { BlockedToken } from '@prisma/client';
+import { IPrismaTR, PrismaService } from 'src/prisma';
 
 @Injectable()
 export class AuthRepository {

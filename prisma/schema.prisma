@@ -17,7 +17,8 @@ model User {
   position     String?  @map("position") @db.VarChar(255) // Должность
   email        String?  @map("email") @db.VarChar(255) // Email
   phone        String?  @map("phone") @db.VarChar(255) // Телефон
-  telegramId   String?  @map("telegram_id") @db.VarChar(255) // Telegram ID
+  telegramId   String?  @unique @map("telegram_id") @db.VarChar(255) // Telegram ID
+  telegramName String?  @map("telegram_name") @db.VarChar(255) // Telegram имя
   isRoot       Boolean  @default(false) @map("is_root") @db.Boolean // Метка администратора
   isBlocked    Boolean  @default(false) @map("is_blocked") @db.Boolean // Метка блокирования
   refreshToken String?  @unique @map("refresh_token") @db.VarChar(255) // Сам refresh-токен
@@ -62,4 +63,12 @@ model BlockedToken {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("blocked_tokens")
+}
+
+model TgAuth {
+  id      Int     @id @default(autoincrement()) @map("id")
+  authKey String? @unique @map("auth_key") @db.VarChar(128)
+  chatId  String? @map("chat_id") @db.VarChar(128)
+
+  @@map("tg_auth")
 }
